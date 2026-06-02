@@ -308,7 +308,7 @@ def main_app():
         st.caption(st.session_state.login_time.strftime('%Y-%m-%d %H:%M:%S'))
     
     # Judul aplikasi
-    st.title("🧪 Aplikasi Audit Kompatibilitas Bahan Kimia")
+    st.title("CHEMICAL COMPABILITY")
     
     # Mengubah data menjadi DataFrame
     df = pd.DataFrame(compatibility_data)
