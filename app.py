@@ -6,7 +6,7 @@ import os
 from datetime import datetime
 
 # Konfigurasi halaman
-st.set_page_config(page_title="Audit Kompatibilitas Bahan Kimia", layout="wide")
+st.set_page_config(page_title="CHEMICAL COMPATIBILITY APPS", layout="wide")
 
 # File untuk menyimpan data pengguna (dalam praktik, gunakan database yang sebenarnya)
 USERS_FILE = "users_data.json"
@@ -295,7 +295,7 @@ def main_app():
         st.caption(st.session_state.login_time.strftime('%Y-%m-%d %H:%M:%S'))
     
     # Judul aplikasi
-    st.title("🧪 Aplikasi Audit Kompatibilitas Bahan Kimia")
+    st.title("CHEMICAL COMPATIBILITY")
     
     # Mengubah data menjadi DataFrame
     df = pd.DataFrame(compatibility_data)
