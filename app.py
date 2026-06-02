@@ -1,52 +1,127 @@
 import streamlit as st
 import pandas as pd
 import hashlib
+import json
+import os
 from datetime import datetime
 
 # Konfigurasi halaman
 st.set_page_config(page_title="Audit Kompatibilitas Bahan Kimia", layout="wide")
 
-# Data pengguna (dalam praktik, gunakan database)
-USERS = {
+# File untuk menyimpan data pengguna (dalam praktik, gunakan database yang sebenarnya)
+USERS_FILE = "users_data.json"
+
+# Data pengguna default
+DEFAULT_USERS = {
     "admin": hashlib.sha256("admin123".encode()).hexdigest(),
-    "user1": hashlib.sha256("password123".encode()).hexdigest(),
-    "lab_technician": hashlib.sha256("tech456".encode()).hexdigest()
 }
 
-# Data kompatibilitas bahan kimia yang diperluas
+# Data kompatibilitas bahan kimia yang sangat diperluas
 compatibility_data = {
     "Bahan Kimia": [
         "Asam Klorida (HCl)",
         "Asam Sulfat (H2SO4)",
         "Asam Nitrat (HNO3)",
+        "Asam Fosfat (H3PO4)",
+        "Asam Asetat (CH3COOH)",
+        "Asam Sitrat (C6H8O7)",
         "Natrium Hidroksida (NaOH)",
         "Kalium Hidroksida (KOH)",
+        "Kalsium Hidroksida (Ca(OH)2)",
         "Amonium Nitrat (NH4NO3)",
-        "Aseton",
-        "Etanol",
-        "Metanol",
+        "Amonium Klorida (NH4Cl)",
+        "Amonium Sulfat ((NH4)2SO4)",
+        "Aseton (CH3COCH3)",
+        "Etanol (C2H5OH)",
+        "Metanol (CH3OH)",
+        "Isopropanol (C3H8O)",
         "Bensin",
+        "Toluena (C7H8)",
+        "Xilena (C8H10)",
+        "Eter Dietil (C4H10O)",
         "Hidrogen Peroksida (H2O2)",
         "Klor (Cl2)",
+        "Bromin (Br2)",
+        "Iodium (I2)",
         "Ammonia (NH3)",
-        "Formalin",
-        "Permanganat Kalium (KMnO4)"
+        "Formalin (HCHO + H2O)",
+        "Permanganat Kalium (KMnO4)",
+        "Natrium Hipoklorit (NaClO)",
+        "Kalsium Hipoklorit (Ca(ClO)2)",
+        "Kalium Bikromat (K2Cr2O7)",
+        "Tembaga Sulfat (CuSO4)",
+        "Besi Klorida (FeCl3)",
+        "Besi Sulfat (FeSO4)",
+        "Seng Klorida (ZnCl2)",
+        "Timbal Asetat (Pb(CH3COO)2)",
+        "Merkuri Klorida (HgCl2)",
+        "Perak Nitrat (AgNO3)",
+        "Natrium Karbonat (Na2CO3)",
+        "Kalium Karbonat (K2CO3)",
+        "Natrium Bikarbonat (NaHCO3)",
+        "Kalsium Karbonat (CaCO3)",
+        "Natrium Fosfat (Na3PO4)",
+        "Kalium Fosfat (K3PO4)",
+        "Natrium Sulfat (Na2SO4)",
+        "Natrium Klorida (NaCl)",
+        "Kalium Klorida (KCl)",
+        "Kalium Sulfat (K2SO4)",
+        "Magnesium Sulfat (MgSO4)",
+        "Kalsium Sulfat (CaSO4)",
+        "Natrium Tiosulfat (Na2S2O3)",
+        "Benzena (C6H6)"
     ],
-    "Asam Klorida (HCl)": ["✅", "⚠️", "⚠️", "❌", "❌", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "❌", "❌", "⚠️", "⚠️"],
-    "Asam Sulfat (H2SO4)": ["⚠️", "✅", "⚠️", "❌", "❌", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "❌", "❌", "⚠️", "⚠️"],
-    "Asam Nitrat (HNO3)": ["⚠️", "⚠️", "✅", "❌", "❌", "❌", "⚠️", "⚠️", "⚠️", "❌", "⚠️", "⚠️", "❌", "⚠️", "❌"],
-    "Natrium Hidroksida (NaOH)": ["❌", "❌", "❌", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "❌", "✅", "⚠️", "❌"],
-    "Kalium Hidroksida (KOH)": ["❌", "❌", "❌", "⚠️", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "❌", "✅", "⚠️", "❌"],
-    "Amonium Nitrat (NH4NO3)": ["⚠️", "⚠️", "❌", "⚠️", "⚠️", "✅", "❌", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "❌", "⚠️", "⚠️"],
-    "Aseton": ["⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "❌", "✅", "✅", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️"],
-    "Etanol": ["⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "⚠️", "✅", "⚠️", "⚠️"],
-    "Metanol": ["⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "⚠️", "✅", "⚠️", "✅", "⚠️", "⚠️"],
-    "Bensin": ["⚠️", "⚠️", "❌", "⚠️", "⚠️", "⚠️", "✅", "✅", "⚠️", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️"],
-    "Hidrogen Peroksida (H2O2)": ["⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "⚠️", "✅", "❌", "⚠️", "❌", "❌"],
-    "Klor (Cl2)": ["❌", "❌", "⚠️", "❌", "❌", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "❌", "✅", "❌", "❌", "❌"],
-    "Ammonia (NH3)": ["❌", "❌", "❌", "✅", "✅", "❌", "⚠️", "✅", "✅", "⚠️", "⚠️", "❌", "✅", "⚠️", "⚠️"],
-    "Formalin": ["⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "❌", "❌", "⚠️", "✅", "⚠️"],
-    "Permanganat Kalium (KMnO4)": ["⚠️", "⚠️", "❌", "❌", "❌", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "❌", "❌", "⚠️", "⚠️", "✅"]
+    "Asam Klorida (HCl)": ["✅", "⚠️", "⚠️", "⚠️", "✅", "✅", "❌", "❌", "❌", "⚠️", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "❌", "❌", "⚠️", "❌", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "⚠️", "⚠️", "✅", "⚠️", "⚠️"],
+    "Asam Sulfat (H2SO4)": ["⚠️", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "❌", "❌", "❌", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "❌", "❌", "⚠️", "❌", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "⚠️", "⚠️", "✅", "⚠️", "⚠️"],
+    "Asam Nitrat (HNO3)": ["⚠️", "⚠️", "✅", "⚠️", "⚠️", "⚠️", "❌", "❌", "❌", "❌", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "❌", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "❌", "⚠️", "❌", "⚠️", "❌", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "❌", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "⚠️", "⚠️", "✅", "⚠️", "❌"],
+    "Asam Fosfat (H3PO4)": ["⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "✅", "⚠️", "✅", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "⚠️", "✅", "✅", "⚠️", "⚠️"],
+    "Asam Asetat (CH3COOH)": ["✅", "⚠️", "⚠️", "✅", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
+    "Asam Sitrat (C6H8O7)": ["✅", "⚠️", "⚠️", "✅", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
+    "Natrium Hidroksida (NaOH)": ["❌", "❌", "❌", "⚠️", "⚠️", "⚠️", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "❌", "❌", "⚠️", "✅", "⚠️", "❌", "✅", "⚠️", "❌", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "⚠️", "✅", "✅", "⚠️", "⚠️"],
+    "Kalium Hidroksida (KOH)": ["❌", "❌", "❌", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "❌", "❌", "⚠️", "✅", "⚠️", "❌", "✅", "⚠️", "❌", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "⚠️", "✅", "✅", "⚠️", "⚠️"],
+    "Kalsium Hidroksida (Ca(OH)2)": ["❌", "❌", "❌", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "❌", "❌", "⚠️", "✅", "⚠️", "❌", "✅", "⚠️", "❌", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "⚠️", "✅", "✅", "⚠️", "⚠️"],
+    "Amonium Nitrat (NH4NO3)": ["⚠️", "⚠️", "❌", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "⚠️", "⚠️", "❌", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "❌", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "⚠️", "⚠️", "✅", "⚠️", "⚠️"],
+    "Amonium Klorida (NH4Cl)": ["✅", "⚠️", "⚠️", "✅", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "✅", "⚠️", "✅", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "⚠️", "⚠️", "✅", "✅", "⚠️", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "⚠️"],
+    "Amonium Sulfat ((NH4)2SO4)": ["⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "✅", "⚠️", "✅", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "⚠️", "⚠️", "✅", "✅", "⚠️", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "⚠️"],
+    "Aseton (CH3COCH3)": ["⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "⚠️", "⚠️", "⚠️", "❌", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
+    "Etanol (C2H5OH)": ["⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "⚠️", "✅", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
+    "Metanol (CH3OH)": ["⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "⚠️", "✅", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
+    "Isopropanol (C3H8O)": ["⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "⚠️", "✅", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
+    "Bensin": ["⚠️", "⚠️", "❌", "⚠️", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
+    "Toluena (C7H8)": ["⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
+    "Xilena (C8H10)": ["⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
+    "Eter Dietil (C4H10O)": ["⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
+    "Hidrogen Peroksida (H2O2)": ["⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "❌", "⚠️", "❌", "⚠️", "❌", "❌", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "⚠️", "✅", "✅", "⚠️", "⚠️"],
+    "Klor (Cl2)": ["❌", "❌", "⚠️", "⚠️", "⚠️", "⚠️", "❌", "❌", "❌", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "❌", "✅", "❌", "❌", "❌", "❌", "❌", "❌", "❌", "❌", "❌", "❌", "❌", "❌", "❌", "❌", "❌", "❌", "❌", "❌", "❌", "❌", "❌", "✅", "✅", "✅", "❌", "❌", "❌", "❌", "❌"],
+    "Bromin (Br2)": ["❌", "❌", "❌", "⚠️", "⚠️", "⚠️", "❌", "❌", "❌", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "❌", "✅", "❌", "❌", "❌", "❌", "❌", "❌", "❌", "❌", "❌", "❌", "❌", "❌", "❌", "❌", "❌", "❌", "❌", "❌", "❌", "❌", "✅", "✅", "✅", "❌", "❌", "❌", "❌", "❌"],
+    "Iodium (I2)": ["⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "❌", "❌", "❌", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️"],
+    "Ammonia (NH3)": ["❌", "❌", "❌", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "❌", "✅", "✅", "⚠️", "✅", "✅", "✅", "⚠️", "✅", "✅", "✅", "⚠️", "❌", "❌", "⚠️", "✅", "⚠️", "❌", "✅", "✅", "❌", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "⚠️", "✅", "✅", "⚠️", "⚠️"],
+    "Formalin (HCHO + H2O)": ["⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "❌", "❌", "❌", "⚠️", "⚠️", "✅", "❌", "⚠️", "⚠️", "❌", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "⚠️", "✅", "✅", "⚠️", "⚠️"],
+    "Permanganat Kalium (KMnO4)": ["⚠️", "⚠️", "❌", "⚠️", "⚠️", "⚠️", "❌", "❌", "❌", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "❌", "❌", "❌", "⚠️", "⚠️", "⚠️", "✅", "❌", "❌", "❌", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "❌", "❌", "❌", "❌", "❌", "❌", "✅", "✅", "✅", "❌", "⚠️", "⚠️", "❌", "❌"],
+    "Natrium Hipoklorit (NaClO)": ["⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "❌", "❌", "⚠️", "✅", "⚠️", "❌", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
+    "Kalsium Hipoklorit (Ca(ClO)2)": ["⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "❌", "❌", "⚠️", "✅", "⚠️", "❌", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
+    "Kalium Bikromat (K2Cr2O7)": ["⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "❌", "❌", "❌", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "❌", "❌", "⚠️", "❌", "❌", "❌", "⚠️", "⚠️", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️"],
+    "Tembaga Sulfat (CuSO4)": ["⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "⚠️", "✅", "✅", "✅", "⚠️", "❌", "❌", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
+    "Besi Klorida (FeCl3)": ["⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "✅", "⚠️", "✅", "✅", "✅", "⚠️", "❌", "❌", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
+    "Besi Sulfat (FeSO4)": ["⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "✅", "⚠️", "✅", "✅", "✅", "⚠️", "❌", "❌", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
+    "Seng Klorida (ZnCl2)": ["⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "⚠️", "✅", "✅", "✅", "⚠️", "❌", "❌", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
+    "Timbal Asetat (Pb(CH3COO)2)": ["⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "✅", "⚠️", "✅", "✅", "✅", "⚠️", "❌", "❌", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
+    "Merkuri Klorida (HgCl2)": ["⚠️", "⚠️", "❌", "⚠️", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "✅", "⚠️", "✅", "✅", "✅", "⚠️", "❌", "❌", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "❌"],
+    "Perak Nitrat (AgNO3)": ["⚠️", "⚠️", "❌", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "✅", "⚠️", "✅", "✅", "✅", "⚠️", "❌", "❌", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "⚠️"],
+    "Natrium Karbonat (Na2CO3)": ["⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "❌", "❌", "⚠️", "✅", "✅", "❌", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
+    "Kalium Karbonat (K2CO3)": ["⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "❌", "❌", "⚠️", "✅", "✅", "❌", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
+    "Natrium Bikarbonat (NaHCO3)": ["⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "❌", "❌", "⚠️", "✅", "✅", "❌", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
+    "Kalsium Karbonat (CaCO3)": ["✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "❌", "❌", "⚠️", "✅", "✅", "❌", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
+    "Natrium Fosfat (Na3PO4)": ["⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "❌", "❌", "⚠️", "✅", "✅", "❌", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
+    "Kalium Fosfat (K3PO4)": ["⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "❌", "❌", "⚠️", "✅", "✅", "❌", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
+    "Natrium Sulfat (Na2SO4)": ["✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "❌", "❌", "⚠️", "✅", "✅", "❌", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
+    "Natrium Klorida (NaCl)": ["✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "❌", "❌", "⚠️", "✅", "✅", "❌", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
+    "Kalium Klorida (KCl)": ["✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "❌", "❌", "⚠️", "✅", "✅", "❌", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
+    "Kalium Sulfat (K2SO4)": ["⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "❌", "❌", "⚠️", "✅", "✅", "❌", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
+    "Magnesium Sulfat (MgSO4)": ["⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "❌", "❌", "⚠️", "✅", "✅", "❌", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
+    "Kalsium Sulfat (CaSO4)": ["✅", "✅", "✅", "✅", "✅", "✅", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "❌", "❌", "⚠️", "✅", "✅", "❌", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
+    "Natrium Tiosulfat (Na2S2O3)": ["⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "❌", "❌", "⚠️", "✅", "✅", "❌", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
+    "Benzena (C6H6)": ["⚠️", "⚠️", "❌", "⚠️", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "⚠️", "❌", "❌", "⚠️", "⚠️", "⚠️", "❌", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"]
 }
 
 # Data saran penyimpanan untuk setiap bahan kimia
@@ -75,6 +150,30 @@ storage_recommendations = {
         "lokasi": "Kabinet asam khusus, jauh dari basa dan zat organik",
         "catatan": "Pengoksidasi kuat, dapat menyebabkan kebakaran, jangan dicampur dengan organik"
     },
+    "Asam Fosfat (H3PO4)": {
+        "level_bahaya": "🟠 BERBAHAYA",
+        "suhu": "20-25°C",
+        "kondisi": "Tempat sejuk, gelap, berventilasi",
+        "wadah": "Botol kaca dengan tutup plastik",
+        "lokasi": "Kabinet asam, jauh dari basa",
+        "catatan": "Asam lemah tapi dapat menyebabkan iritasi, jangan dicampur dengan basa kuat"
+    },
+    "Asam Asetat (CH3COOH)": {
+        "level_bahaya": "🟡 BERBAHAYA (Mudah Terbakar)",
+        "suhu": "15-25°C",
+        "kondisi": "Tempat sejuk, gelap, berventilasi baik",
+        "wadah": "Botol plastik atau kaca dengan tutup aman",
+        "lokasi": "Area berventilasi baik, jauh dari api",
+        "catatan": "Mudah menguap, iritasi mata, gunakan di area ventilasi"
+    },
+    "Asam Sitrat (C6H8O7)": {
+        "level_bahaya": "🟢 AMAN",
+        "suhu": "20-25°C",
+        "kondisi": "Tempat sejuk, kering, gelap",
+        "wadah": "Wadah plastik atau kaca biasa",
+        "lokasi": "Area penyimpanan biasa, jauh dari panas",
+        "catatan": "Asam organik lemah, relatif aman, tetap hindari kontak mata"
+    },
     "Natrium Hidroksida (NaOH)": {
         "level_bahaya": "🔴 SANGAT BERBAHAYA",
         "suhu": "20-25°C",
@@ -91,6 +190,14 @@ storage_recommendations = {
         "lokasi": "Kabinet basa, jauh dari asam dan zat lain",
         "catatan": "Kaustik dan higroskopis, dapat menyerap kelembaban, jauhkan dari asam"
     },
+    "Kalsium Hidroksida (Ca(OH)2)": {
+        "level_bahaya": "🟠 BERBAHAYA",
+        "suhu": "20-25°C",
+        "kondisi": "Tempat kering, sejuk, gelap",
+        "wadah": "Wadah plastik atau kaca dengan tutup aman",
+        "lokasi": "Area penyimpanan biasa, jauh dari asam",
+        "catatan": "Bersifat kaustik lemah, dapat mengiritasi kulit, hindari kontak"
+    },
     "Amonium Nitrat (NH4NO3)": {
         "level_bahaya": "🟠 BERBAHAYA (Pengoksidasi)",
         "suhu": "20-25°C",
@@ -99,7 +206,23 @@ storage_recommendations = {
         "lokasi": "Area terpisah, jauh dari bahan mudah terbakar",
         "catatan": "Pengoksidasi, dapat meningkatkan risiko kebakaran, jauhkan dari materi organik"
     },
-    "Aseton": {
+    "Amonium Klorida (NH4Cl)": {
+        "level_bahaya": "🟢 AMAN",
+        "suhu": "20-25°C",
+        "kondisi": "Tempat sejuk, kering, gelap",
+        "wadah": "Wadah plastik atau kaca biasa",
+        "lokasi": "Area penyimpanan biasa",
+        "catatan": "Relatif aman, tetap hindari inhalasi debu"
+    },
+    "Amonium Sulfat ((NH4)2SO4)": {
+        "level_bahaya": "🟢 AMAN",
+        "suhu": "20-25°C",
+        "kondisi": "Tempat sejuk, kering, gelap",
+        "wadah": "Wadah plastik atau kaca biasa",
+        "lokasi": "Area penyimpanan biasa",
+        "catatan": "Fertilizer aman, tetap hindari paparan berlebihan"
+    },
+    "Aseton (CH3COCH3)": {
         "level_bahaya": "🟡 BERBAHAYA (Mudah Terbakar)",
         "suhu": "15-25°C",
         "kondisi": "Tempat sejuk, gelap, berventilasi baik, jauh dari api",
@@ -107,7 +230,7 @@ storage_recommendations = {
         "lokasi": "Kabinet flammable khusus, area ventilasi baik",
         "catatan": "Sangat mudah terbakar, volatile, jauh dari sumber api dan panas"
     },
-    "Etanol": {
+    "Etanol (C2H5OH)": {
         "level_bahaya": "🟡 BERBAHAYA (Mudah Terbakar)",
         "suhu": "15-25°C",
         "kondisi": "Tempat sejuk, gelap, berventilasi baik, area terbuka",
@@ -115,7 +238,7 @@ storage_recommendations = {
         "lokasi": "Kabinet flammable, jauh dari sumber api",
         "catatan": "Mudah terbakar, volatile, simpan di area yang aman dari api dan panas"
     },
-    "Metanol": {
+    "Metanol (CH3OH)": {
         "level_bahaya": "🟡 BERBAHAYA (Mudah Terbakar, Beracun)",
         "suhu": "15-25°C",
         "kondisi": "Tempat sejuk, gelap, berventilasi baik, jauh dari panas",
@@ -123,13 +246,45 @@ storage_recommendations = {
         "lokasi": "Kabinet flammable khusus, area ventilasi maksimal",
         "catatan": "Beracun dan mudah terbakar, hindari inhalasi dan kontak kulit, simpan aman"
     },
+    "Isopropanol (C3H8O)": {
+        "level_bahaya": "🟡 BERBAHAYA (Mudah Terbakar)",
+        "suhu": "15-25°C",
+        "kondisi": "Tempat sejuk, gelap, berventilasi baik",
+        "wadah": "Botol kaca atau plastik dengan tutup aman",
+        "lokasi": "Kabinet flammable, jauh dari api",
+        "catatan": "Mudah terbakar, iritasi mata, gunakan di area berventilasi"
+    },
     "Bensin": {
         "level_bahaya": "🟡 BERBAHAYA (Sangat Mudah Terbakar)",
         "suhu": "15-25°C",
-        "kondisi": "Tempat sejuk, gelak, berventilasi maksimal, jauh dari api",
+        "kondisi": "Tempat sejuk, gelap, berventilasi maksimal, jauh dari api",
         "wadah": "Wadah metal atau plastik tahan bensin dengan tutup aman",
         "lokasi": "Kabinet flammable metal, area ventilasi eksternal",
         "catatan": "Sangat volatile dan mudah terbakar, simpan di area khusus dengan sistem keselamatan"
+    },
+    "Toluena (C7H8)": {
+        "level_bahaya": "🟡 BERBAHAYA (Mudah Terbakar)",
+        "suhu": "15-25°C",
+        "kondisi": "Tempat sejuk, gelap, berventilasi baik",
+        "wadah": "Botol kaca atau plastik tahan toluena dengan tutup aman",
+        "lokasi": "Kabinet flammable, area ventilasi baik",
+        "catatan": "Mudah terbakar, hindari inhalasi debu, gunakan di fume hood"
+    },
+    "Xilena (C8H10)": {
+        "level_bahaya": "🟡 BERBAHAYA (Mudah Terbakar)",
+        "suhu": "15-25°C",
+        "kondisi": "Tempat sejuk, gelak, berventilasi baik",
+        "wadah": "Botol kaca dengan tutup aman",
+        "lokasi": "Kabinet flammable, area ventilasi maksimal",
+        "catatan": "Mudah terbakar dan beracun, hindari inhalasi"
+    },
+    "Eter Dietil (C4H10O)": {
+        "level_bahaya": "🟡 BERBAHAYA (Sangat Mudah Terbakar)",
+        "suhu": "15-25°C",
+        "kondisi": "Tempat sejuk, gelap, berventilasi ekstensif",
+        "wadah": "Botol kaca berwarna dengan tutup aman",
+        "lokasi": "Kabinet flammable khusus, ventilasi maksimal",
+        "catatan": "Sangat volatile dan mudah terbakar, dapat membentuk peroksida"
     },
     "Hidrogen Peroksida (H2O2)": {
         "level_bahaya": "🟠 BERBAHAYA (Pengoksidasi)",
@@ -147,6 +302,22 @@ storage_recommendations = {
         "lokasi": "Area penyimpanan khusus dengan sistem ventilasi dan evakuasi gas",
         "catatan": "Gas beracun, menyebabkan kerusakan paru, hanya staf terlatih yang boleh menangani"
     },
+    "Bromin (Br2)": {
+        "level_bahaya": "🔴 SANGAT BERBAHAYA (Cairan Beracun)",
+        "suhu": "20-25°C",
+        "kondisi": "Tempat sejuk, gelap, berventilasi ekstensif",
+        "wadah": "Botol kaca dengan tutup plastik (tidak metal)",
+        "lokasi": "Area berventilasi maksimal, area terbatas",
+        "catatan": "Cairan sangat beracun dan mudah menguap, gunakan hanya di fume hood"
+    },
+    "Iodium (I2)": {
+        "level_bahaya": "🟠 BERBAHAYA (Beracun)",
+        "suhu": "20-25°C",
+        "kondisi": "Tempat sejuk, gelap, berventilasi baik",
+        "wadah": "Botol kaca berwarna gelap dengan tutup aman",
+        "lokasi": "Kabinet berventilasi baik, area terbatas",
+        "catatan": "Beracun, dapat menguap, hindari inhalasi dan kontak"
+    },
     "Ammonia (NH3)": {
         "level_bahaya": "🟠 BERBAHAYA (Gas Beracun)",
         "suhu": "15-25°C",
@@ -155,7 +326,7 @@ storage_recommendations = {
         "lokasi": "Area berventilasi baik, jauh dari asam dan oksidator",
         "catatan": "Gas pungent dan beracun, dapat menyebabkan iritasi, simpan di area terbuka"
     },
-    "Formalin": {
+    "Formalin (HCHO + H2O)": {
         "level_bahaya": "🟠 BERBAHAYA (Beracun, Karsinogen)",
         "suhu": "15-25°C",
         "kondisi": "Tempat sejuk, gelap, berventilasi baik, area terbatas",
@@ -170,6 +341,198 @@ storage_recommendations = {
         "wadah": "Botol kaca atau wadah plastik dengan tutup aman",
         "lokasi": "Rak terpisah, jauh dari bahan organik dan reduktor",
         "catatan": "Pengoksidasi kuat, dapat menyebabkan kebakaran dengan bahan organik"
+    },
+    "Natrium Hipoklorit (NaClO)": {
+        "level_bahaya": "🟠 BERBAHAYA",
+        "suhu": "15-25°C",
+        "kondisi": "Tempat sejuk, gelap, berventilasi baik",
+        "wadah": "Botol plastik dengan tutup aman",
+        "lokasi": "Area berventilasi baik, jauh dari asam",
+        "catatan": "Dapat mengeluarkan gas klorin jika dicampur dengan asam, hindari"
+    },
+    "Kalsium Hipoklorit (Ca(ClO)2)": {
+        "level_bahaya": "🟠 BERBAHAYA",
+        "suhu": "20-25°C",
+        "kondisi": "Tempat sejuk, kering, gelap, berventilasi",
+        "wadah": "Botol plastik atau wadah dengan tutup aman",
+        "lokasi": "Area berventilasi, jauh dari asam",
+        "catatan": "Pengoksidasi, dapat menyebabkan kebakaran, jangan dicampur dengan asam"
+    },
+    "Kalium Bikromat (K2Cr2O7)": {
+        "level_bahaya": "🔴 SANGAT BERBAHAYA",
+        "suhu": "20-25°C",
+        "kondisi": "Tempat kering, sejuk, gelap, berventilasi baik",
+        "wadah": "Botol kaca dengan tutup aman",
+        "lokasi": "Kabinet khusus, jauh dari bahan organik",
+        "catatan": "Karsinogen, pengoksidasi kuat, hindari kontak dan inhalasi debu"
+    },
+    "Tembaga Sulfat (CuSO4)": {
+        "level_bahaya": "🟠 BERBAHAYA (Beracun)",
+        "suhu": "20-25°C",
+        "kondisi": "Tempat sejuk, kering, gelap",
+        "wadah": "Botol kaca atau wadah plastik dengan tutup aman",
+        "lokasi": "Area penyimpanan biasa, jauh dari pakan ternak",
+        "catatan": "Beracun jika tertelan, hindari kontak dengan makanan"
+    },
+    "Besi Klorida (FeCl3)": {
+        "level_bahaya": "🟠 BERBAHAYA",
+        "suhu": "20-25°C",
+        "kondisi": "Tempat kering, sejuk, gelap, berventilasi baik",
+        "wadah": "Botol kaca dengan tutup plastik",
+        "lokasi": "Area terpisah, jauh dari basa",
+        "catatan": "Asam dan hygroscopik, dapat menyerap kelembaban, korosif pada metal"
+    },
+    "Besi Sulfat (FeSO4)": {
+        "level_bahaya": "🟢 AMAN",
+        "suhu": "20-25°C",
+        "kondisi": "Tempat sejuk, kering, gelap",
+        "wadah": "Wadah plastik atau kaca biasa",
+        "lokasi": "Area penyimpanan biasa",
+        "catatan": "Relatif aman, tetap hindari kontak dengan makanan"
+    },
+    "Seng Klorida (ZnCl2)": {
+        "level_bahaya": "🟠 BERBAHAYA",
+        "suhu": "20-25°C",
+        "kondisi": "Tempat kering, sejuk, gelap",
+        "wadah": "Botol kaca dengan tutup plastik",
+        "lokasi": "Area penyimpanan biasa, jauh dari basa",
+        "catatan": "Hygroscopik, dapat menyerap kelembaban, iritasi mata"
+    },
+    "Timbal Asetat (Pb(CH3COO)2)": {
+        "level_bahaya": "🔴 SANGAT BERBAHAYA (Beracun Berat)",
+        "suhu": "20-25°C",
+        "kondisi": "Tempat sejuk, kering, gelap, berventilasi baik",
+        "wadah": "Botol kaca dengan tutup aman",
+        "lokasi": "Kabinet khusus, area terbatas, jauh dari makanan",
+        "catatan": "Metal berat beracun, dapat menyebabkan keracunan kronis, hindari kontak"
+    },
+    "Merkuri Klorida (HgCl2)": {
+        "level_bahaya": "🔴 SANGAT BERBAHAYA (Beracun Berat)",
+        "suhu": "20-25°C",
+        "kondisi": "Tempat sejuk, kering, gelak, berventilasi ekstensif",
+        "wadah": "Botol kaca dengan tutup aman, dalam kemasan sekunder",
+        "lokasi": "Kabinet khusus terkunci, area terbatas maksimal",
+        "catatan": "Sangat beracun, dapat meracuni melalui inhalasi dan kontak, hanya ahli yang menangani"
+    },
+    "Perak Nitrat (AgNO3)": {
+        "level_bahaya": "🟠 BERBAHAYA (Korosif)",
+        "suhu": "20-25°C",
+        "kondisi": "Tempat sejuk, gelap, berventilasi baik",
+        "wadah": "Botol kaca coklat dengan tutup plastik",
+        "lokasi": "Area penyimpanan khusus, jauh dari organik",
+        "catatan": "Korosif dan dapat membakar kulit, menyebabkan noda hitam"
+    },
+    "Natrium Karbonat (Na2CO3)": {
+        "level_bahaya": "🟢 AMAN",
+        "suhu": "20-25°C",
+        "kondisi": "Tempat sejuk, kering, gelap",
+        "wadah": "Wadah plastik atau kaca biasa",
+        "lokasi": "Area penyimpanan biasa",
+        "catatan": "Relatif aman, tetap hindari debu dan kontak dengan asam"
+    },
+    "Kalium Karbonat (K2CO3)": {
+        "level_bahaya": "🟢 AMAN",
+        "suhu": "20-25°C",
+        "kondisi": "Tempat sejuk, kering, gelap",
+        "wadah": "Wadah plastik atau kaca biasa",
+        "lokasi": "Area penyimpanan biasa",
+        "catatan": "Relatif aman, tetap hindari debu"
+    },
+    "Natrium Bikarbonat (NaHCO3)": {
+        "level_bahaya": "🟢 AMAN",
+        "suhu": "20-25°C",
+        "kondisi": "Tempat sejuk, kering, gelap",
+        "wadah": "Wadah plastik atau kaca biasa",
+        "lokasi": "Area penyimpanan biasa",
+        "catatan": "Aman, biasanya digunakan di rumah tangga"
+    },
+    "Kalsium Karbonat (CaCO3)": {
+        "level_bahaya": "🟢 AMAN",
+        "suhu": "20-25°C",
+        "kondisi": "Tempat sejuk, kering, gelap",
+        "wadah": "Wadah plastik atau kaca biasa",
+        "lokasi": "Area penyimpanan biasa",
+        "catatan": "Aman, relatif inert"
+    },
+    "Natrium Fosfat (Na3PO4)": {
+        "level_bahaya": "🟢 AMAN",
+        "suhu": "20-25°C",
+        "kondisi": "Tempat sejuk, kering, gelap",
+        "wadah": "Wadah plastik atau kaca biasa",
+        "lokasi": "Area penyimpanan biasa",
+        "catatan": "Relatif aman, basa lemah"
+    },
+    "Kalium Fosfat (K3PO4)": {
+        "level_bahaya": "🟢 AMAN",
+        "suhu": "20-25°C",
+        "kondisi": "Tempat sejuk, kering, gelap",
+        "wadah": "Wadah plastik atau kaca biasa",
+        "lokasi": "Area penyimpanan biasa",
+        "catatan": "Relatif aman, basa lemah"
+    },
+    "Natrium Sulfat (Na2SO4)": {
+        "level_bahaya": "🟢 AMAN",
+        "suhu": "20-25°C",
+        "kondisi": "Tempat sejuk, kering, gelap",
+        "wadah": "Wadah plastik atau kaca biasa",
+        "lokasi": "Area penyimpanan biasa",
+        "catatan": "Aman, relatively inert"
+    },
+    "Natrium Klorida (NaCl)": {
+        "level_bahaya": "🟢 AMAN",
+        "suhu": "20-25°C",
+        "kondisi": "Tempat sejuk, kering, gelap",
+        "wadah": "Wadah plastik atau kaca biasa",
+        "lokasi": "Area penyimpanan biasa",
+        "catatan": "Aman, garam dapur biasa"
+    },
+    "Kalium Klorida (KCl)": {
+        "level_bahaya": "🟢 AMAN",
+        "suhu": "20-25°C",
+        "kondisi": "Tempat sejuk, kering, gelap",
+        "wadah": "Wadah plastik atau kaca biasa",
+        "lokasi": "Area penyimpanan biasa",
+        "catatan": "Aman, relatif inert"
+    },
+    "Kalium Sulfat (K2SO4)": {
+        "level_bahaya": "🟢 AMAN",
+        "suhu": "20-25°C",
+        "kondisi": "Tempat sejuk, kering, gelap",
+        "wadah": "Wadah plastik atau kaca biasa",
+        "lokasi": "Area penyimpanan biasa",
+        "catatan": "Aman, fertilizer"
+    },
+    "Magnesium Sulfat (MgSO4)": {
+        "level_bahaya": "🟢 AMAN",
+        "suhu": "20-25°C",
+        "kondisi": "Tempat sejuk, kering, gelap",
+        "wadah": "Wadah plastik atau kaca biasa",
+        "lokasi": "Area penyimpanan biasa",
+        "catatan": "Aman, garam Epsom"
+    },
+    "Kalsium Sulfat (CaSO4)": {
+        "level_bahaya": "🟢 AMAN",
+        "suhu": "20-25°C",
+        "kondisi": "Tempat sejuk, kering, gelap",
+        "wadah": "Wadah plastik atau kaca biasa",
+        "lokasi": "Area penyimpanan biasa",
+        "catatan": "Aman, relatif inert"
+    },
+    "Natrium Tiosulfat (Na2S2O3)": {
+        "level_bahaya": "🟢 AMAN",
+        "suhu": "20-25°C",
+        "kondisi": "Tempat sejuk, kering, gelap",
+        "wadah": "Wadah plastik atau kaca biasa",
+        "lokasi": "Area penyimpanan biasa",
+        "catatan": "Relatif aman, gunakan dalam fotografi"
+    },
+    "Benzena (C6H6)": {
+        "level_bahaya": "🔴 SANGAT BERBAHAYA (Karsinogen)",
+        "suhu": "15-25°C",
+        "kondisi": "Tempat sejuk, gelap, berventilasi ekstensif",
+        "wadah": "Botol kaca dengan tutup aman",
+        "lokasi": "Kabinet flammable khusus, area terbatas",
+        "catatan": "Karsinogen, mudah terbakar, hindari inhalasi, gunakan hanya di fume hood"
     }
 }
 
@@ -186,6 +549,18 @@ if 'logged_in' not in st.session_state:
     st.session_state.username = None
     st.session_state.last_check = None
 
+def load_users():
+    """Load data pengguna dari file atau gunakan default"""
+    if os.path.exists(USERS_FILE):
+        with open(USERS_FILE, 'r') as f:
+            return json.load(f)
+    return DEFAULT_USERS.copy()
+
+def save_users(users):
+    """Simpan data pengguna ke file"""
+    with open(USERS_FILE, 'w') as f:
+        json.dump(users, f)
+
 def hash_password(password):
     """Hash password menggunakan SHA256"""
     return hashlib.sha256(password.encode()).hexdigest()
@@ -196,57 +571,72 @@ def is_admin():
 
 def login_page():
     """Halaman login"""
-    st.markdown("""
-    <style>
-        .login-container {
-            max-width: 400px;
-            margin: 50px auto;
-            padding: 30px;
-            border-radius: 10px;
-            background-color: #f0f2f6;
-        }
-    </style>
-    """, unsafe_allow_html=True)
-    
-    st.markdown("<h1 style='text-align: center'>🔐 Login</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center'>🔐 Login / Register</h1>", unsafe_allow_html=True)
     st.markdown("<h3 style='text-align: center'>Sistem Audit Kompatibilitas Bahan Kimia</h3>", unsafe_allow_html=True)
     
-    with st.container():
-        col1, col2, col3 = st.columns([1, 2, 1])
+    # Tabs untuk Login dan Register
+    tab_login, tab_register = st.tabs(["🔓 Login", "📝 Daftar Akun Baru"])
+    
+    with tab_login:
+        st.subheader("Masuk ke Akun Anda")
         
-        with col2:
-            st.info("📝 Gunakan akun untuk login ke sistem")
+        with st.container():
+            col1, col2, col3 = st.columns([1, 2, 1])
             
-            username = st.text_input("Username", key="login_username")
-            password = st.text_input("Password", type="password", key="login_password")
-            
-            col_btn1, col_btn2 = st.columns(2)
-            
-            with col_btn1:
-                if st.button("🔓 Login", use_container_width=True):
-                    if username in USERS:
-                        if hash_password(password) == USERS[username]:
+            with col2:
+                st.info("📝 Masukkan kredensial Anda untuk login")
+                
+                username = st.text_input("Username", key="login_username")
+                password = st.text_input("Password", type="password", key="login_password")
+                
+                if st.button("🔓 Login", use_container_width=True, key="login_btn"):
+                    users = load_users()
+                    if username in users:
+                        if hash_password(password) == users[username]:
                             st.session_state.logged_in = True
                             st.session_state.username = username
                             st.session_state.login_time = datetime.now()
-                            st.success(f"Selamat datang, {username}!")
+                            st.success(f"Selamat datang, {username}! 👋")
                             st.rerun()
                         else:
                             st.error("❌ Password salah!")
                     else:
                         st.error("❌ Username tidak ditemukan!")
+    
+    with tab_register:
+        st.subheader("Buat Akun Baru")
+        
+        with st.container():
+            col1, col2, col3 = st.columns([1, 2, 1])
             
-            with col_btn2:
-                if st.button("ℹ️ Demo", use_container_width=True):
-                    st.info("""
-                    **Akun Demo:**
-                    - Username: `admin`
-                    - Password: `admin123`
-                    
-                    Atau
-                    - Username: `user1`
-                    - Password: `password123`
-                    """)
+            with col2:
+                st.info("📝 Isi formulir di bawah untuk membuat akun baru")
+                
+                new_username = st.text_input("Username baru", key="reg_username", 
+                    help="Username harus unik dan terdiri dari huruf, angka, dan underscore")
+                new_password = st.text_input("Password", type="password", key="reg_password",
+                    help="Gunakan password yang kuat (minimal 6 karakter)")
+                confirm_password = st.text_input("Konfirmasi Password", type="password", key="reg_confirm",
+                    help="Ketik ulang password Anda")
+                
+                if st.button("📝 Daftar", use_container_width=True, key="register_btn"):
+                    # Validasi input
+                    if not new_username or not new_password:
+                        st.error("❌ Username dan password tidak boleh kosong!")
+                    elif len(new_password) < 6:
+                        st.error("❌ Password minimal 6 karakter!")
+                    elif new_password != confirm_password:
+                        st.error("❌ Password dan konfirmasi password tidak cocok!")
+                    else:
+                        users = load_users()
+                        if new_username in users:
+                            st.error("❌ Username sudah terdaftar! Gunakan username lain.")
+                        else:
+                            # Daftar akun baru
+                            users[new_username] = hash_password(new_password)
+                            save_users(users)
+                            st.success(f"✅ Akun '{new_username}' berhasil dibuat! Silakan login dengan akun baru Anda.")
+                            st.balloons()
 
 def display_storage_recommendation(chemical):
     """Menampilkan rekomendasi penyimpanan untuk bahan kimia"""
@@ -513,19 +903,24 @@ def main_app():
         st.info(f"📌 Total: {len(df['Bahan Kimia'])} jenis bahan kimia")
         
         # Buat kolom untuk daftar bahan
-        col1, col2 = st.columns(2)
+        col1, col2, col3 = st.columns(3)
         
         chemicals = df["Bahan Kimia"].tolist()
-        mid_point = len(chemicals) // 2
+        chunk_size = (len(chemicals) + 2) // 3
         
         with col1:
             st.markdown("**Daftar Bahan Kimia (Part 1):**")
-            for i, chem in enumerate(chemicals[:mid_point], 1):
+            for i, chem in enumerate(chemicals[:chunk_size], 1):
                 st.write(f"{i}. {chem}")
         
         with col2:
             st.markdown("**Daftar Bahan Kimia (Part 2):**")
-            for i, chem in enumerate(chemicals[mid_point:], mid_point + 1):
+            for i, chem in enumerate(chemicals[chunk_size:chunk_size*2], chunk_size + 1):
+                st.write(f"{i}. {chem}")
+        
+        with col3:
+            st.markdown("**Daftar Bahan Kimia (Part 3):**")
+            for i, chem in enumerate(chemicals[chunk_size*2:], chunk_size*2 + 1):
                 st.write(f"{i}. {chem}")
         
         st.divider()
@@ -543,6 +938,7 @@ def main_app():
         - **🔴 SANGAT BERBAHAYA**: Bahan yang sangat beracun, korosif, atau mudah meledak. Hanya staf terlatih yang boleh menangani.
         - **🟠 BERBAHAYA**: Bahan yang bersifat beracun, pengoksidasi, atau dapat menyebabkan kebakaran. Memerlukan tindakan keselamatan.
         - **🟡 BERBAHAYA (Mudah Terbakar)**: Bahan yang mudah terbakar atau volatile. Harus disimpan jauh dari api.
+        - **🟢 AMAN**: Bahan yang relatif aman tapi tetap memerlukan penanganan hati-hati dan penyimpanan yang benar.
         """)
 
 # Jalankan aplikasi
