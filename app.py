@@ -294,8 +294,8 @@ def main_app():
         st.markdown("**Login time:**")
         st.caption(st.session_state.login_time.strftime('%Y-%m-%d %H:%M:%S'))
     
-    # Judul aplikasi
-    st.title("CHEMICAL COMPATIBILITY")
+    # Judul aplikasi - RATA TENGAH
+    st.markdown("<h1 style='text-align: center'>CHEMICAL COMPABILITY</h1>", unsafe_allow_html=True)
     
     # Mengubah data menjadi DataFrame
     df = pd.DataFrame(compatibility_data)
