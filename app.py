@@ -6,7 +6,7 @@ import os
 from datetime import datetime
 
 # Konfigurasi halaman
-st.set_page_config(page_title="Audit Kompatibilitas Bahan Kimia", layout="wide")
+st.set_page_config(page_title="CHEMICAL COMPABILITY APPS", layout="wide")
 
 # File untuk menyimpan data pengguna (dalam praktik, gunakan database yang sebenarnya)
 USERS_FILE = "users_data.json"
