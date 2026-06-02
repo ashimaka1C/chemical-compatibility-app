@@ -6,7 +6,7 @@ import os
 from datetime import datetime
 
 # Konfigurasi halaman
-st.set_page_config(page_title="CHEMICAL COMPABILITY APPS", layout="wide")
+st.set_page_config(page_title="Audit Kompatibilitas Bahan Kimia", layout="wide")
 
 # File untuk menyimpan data pengguna (dalam praktik, gunakan database yang sebenarnya)
 USERS_FILE = "users_data.json"
@@ -113,7 +113,7 @@ compatibility_data = {
     "Natrium Bikarbonat (NaHCO3)": ["⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "❌", "❌", "⚠️", "✅", "✅", "❌", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
     "Kalsium Karbonat (CaCO3)": ["✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "❌", "❌", "⚠️", "✅", "✅", "❌", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
     "Natrium Fosfat (Na3PO4)": ["⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "❌", "❌", "⚠️", "✅", "✅", "❌", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
-    "Kalium Fosfat (K3PO4)": ["⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "���", "❌", "⚠️", "✅", "✅", "❌", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
+    "Kalium Fosfat (K3PO4)": ["⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "⚠️", "✅", "✅", "⚠️", "✅", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "❌", "❌", "⚠️", "✅", "✅", "❌", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
     "Natrium Sulfat (Na2SO4)": ["✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "❌", "❌", "⚠️", "✅", "✅", "❌", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
     "Natrium Klorida (NaCl)": ["✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "❌", "❌", "⚠️", "✅", "✅", "❌", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
     "Kalium Klorida (KCl)": ["✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "❌", "❌", "⚠️", "✅", "✅", "❌", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"],
@@ -124,7 +124,7 @@ compatibility_data = {
     "Benzena (C6H6)": ["⚠️", "⚠️", "❌", "⚠️", "✅", "✅", "⚠️", "⚠️", "⚠️", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "⚠️", "❌", "❌", "⚠️", "⚠️", "⚠️", "❌", "✅", "✅", "⚠️", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅", "✅"]
 }
 
-# Data saran penyimpanan untuk setiap bahan kimia (dipotong untuk efisiensi, sama seperti sebelumnya)
+# Data saran penyimpanan untuk setiap bahan kimia (dipotong untuk efisiensi)
 storage_recommendations = {
     "Asam Klorida (HCl)": {
         "level_bahaya": "🔴 SANGAT BERBAHAYA",
@@ -179,73 +179,60 @@ def is_admin():
     return st.session_state.username == "admin"
 
 def login_page():
-    """Halaman login"""
-    st.markdown("<h1 style='text-align: center'>🔐 Login / Register</h1>", unsafe_allow_html=True)
-    st.markdown("<h3 style='text-align: center'>Sistem Audit Kompatibilitas Bahan Kimia</h3>", unsafe_allow_html=True)
+    """Halaman login dengan form register di bawahnya"""
+    st.markdown("<h1 style='text-align: center'>🔐 Sistem Audit Kompatibilitas Bahan Kimia</h1>", unsafe_allow_html=True)
     
-    # Tabs untuk Login dan Register
-    tab_login, tab_register = st.tabs(["🔓 Login", "📝 Daftar Akun Baru"])
-    
-    with tab_login:
-        st.subheader("Masuk ke Akun Anda")
+    with st.container():
+        col1, col2, col3 = st.columns([1, 2, 1])
         
-        with st.container():
-            col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.markdown("### 🔓 Login")
+            st.info("📝 Masukkan kredensial Anda untuk login")
             
-            with col2:
-                st.info("📝 Masukkan kredensial Anda untuk login")
-                
-                username = st.text_input("Username", key="login_username")
-                password = st.text_input("Password", type="password", key="login_password")
-                
-                if st.button("🔓 Login", use_container_width=True, key="login_btn"):
+            username = st.text_input("Username", key="login_username")
+            password = st.text_input("Password", type="password", key="login_password")
+            
+            if st.button("🔓 Login", use_container_width=True, key="login_btn"):
+                users = load_users()
+                if username in users:
+                    if hash_password(password) == users[username]:
+                        st.session_state.logged_in = True
+                        st.session_state.username = username
+                        st.session_state.login_time = datetime.now()
+                        st.success(f"Selamat datang, {username}! 👋")
+                        st.rerun()
+                    else:
+                        st.error("❌ Password salah!")
+                else:
+                    st.error("❌ Username tidak ditemukan!")
+            
+            st.divider()
+            
+            st.markdown("### 📝 Buat Akun Baru")
+            st.info("Isi formulir di bawah untuk membuat akun baru")
+            
+            new_username = st.text_input("Username baru", key="reg_username")
+            new_password = st.text_input("Password", type="password", key="reg_password")
+            confirm_password = st.text_input("Konfirmasi Password", type="password", key="reg_confirm")
+            
+            if st.button("📝 Daftar", use_container_width=True, key="register_btn"):
+                # Validasi input
+                if not new_username or not new_password:
+                    st.error("❌ Username dan password tidak boleh kosong!")
+                elif len(new_password) < 6:
+                    st.error("❌ Password minimal 6 karakter!")
+                elif new_password != confirm_password:
+                    st.error("❌ Password dan konfirmasi password tidak cocok!")
+                else:
                     users = load_users()
-                    if username in users:
-                        if hash_password(password) == users[username]:
-                            st.session_state.logged_in = True
-                            st.session_state.username = username
-                            st.session_state.login_time = datetime.now()
-                            st.success(f"Selamat datang, {username}! 👋")
-                            st.rerun()
-                        else:
-                            st.error("❌ Password salah!")
+                    if new_username in users:
+                        st.error("❌ Username sudah terdaftar! Gunakan username lain.")
                     else:
-                        st.error("❌ Username tidak ditemukan!")
-    
-    with tab_register:
-        st.subheader("Buat Akun Baru")
-        
-        with st.container():
-            col1, col2, col3 = st.columns([1, 2, 1])
-            
-            with col2:
-                st.info("📝 Isi formulir di bawah untuk membuat akun baru")
-                
-                new_username = st.text_input("Username baru", key="reg_username", 
-                    help="Username harus unik dan terdiri dari huruf, angka, dan underscore")
-                new_password = st.text_input("Password", type="password", key="reg_password",
-                    help="Gunakan password yang kuat (minimal 6 karakter)")
-                confirm_password = st.text_input("Konfirmasi Password", type="password", key="reg_confirm",
-                    help="Ketik ulang password Anda")
-                
-                if st.button("📝 Daftar", use_container_width=True, key="register_btn"):
-                    # Validasi input
-                    if not new_username or not new_password:
-                        st.error("❌ Username dan password tidak boleh kosong!")
-                    elif len(new_password) < 6:
-                        st.error("❌ Password minimal 6 karakter!")
-                    elif new_password != confirm_password:
-                        st.error("❌ Password dan konfirmasi password tidak cocok!")
-                    else:
-                        users = load_users()
-                        if new_username in users:
-                            st.error("❌ Username sudah terdaftar! Gunakan username lain.")
-                        else:
-                            # Daftar akun baru
-                            users[new_username] = hash_password(new_password)
-                            save_users(users)
-                            st.success(f"✅ Akun '{new_username}' berhasil dibuat! Silakan login dengan akun baru Anda.")
-                            st.balloons()
+                        # Daftar akun baru
+                        users[new_username] = hash_password(new_password)
+                        save_users(users)
+                        st.success(f"✅ Akun '{new_username}' berhasil dibuat! Silakan login dengan akun baru Anda.")
+                        st.balloons()
 
 def display_storage_recommendation(chemical):
     """Menampilkan rekomendasi penyimpanan untuk bahan kimia"""
@@ -308,7 +295,7 @@ def main_app():
         st.caption(st.session_state.login_time.strftime('%Y-%m-%d %H:%M:%S'))
     
     # Judul aplikasi
-    st.title("CHEMICAL COMPABILITY")
+    st.title("🧪 Aplikasi Audit Kompatibilitas Bahan Kimia")
     
     # Mengubah data menjadi DataFrame
     df = pd.DataFrame(compatibility_data)
