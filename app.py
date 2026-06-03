@@ -520,7 +520,8 @@ if not st.session_state.logged_in:
     login_page()
 else:
     main_app()
-    from flask import Flask, render_template_string
+    
+from flask import Flask, render_template_string
 
 app = Flask(__name__)
 
